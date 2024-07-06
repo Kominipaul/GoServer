@@ -1,29 +1,30 @@
 package main
 
 import (
-    "log"
-    "net/http"
-    "GoServer/api/handlers"
+	"log"
+	"net/http"
+
+	"GoServer/api/handlers" // Absolute import path
+	// Absolute import path
 )
 
 func main() {
-    // This func is responsible for routing the requests to the appropriate handlers
-    // The first argument is the route, the second is the handler function
-    http.HandleFunc("/", handlers.HomeHandler)
+	// Register handlers and middleware
+	http.HandleFunc("/", handlers.HomeHandler)
+	http.HandleFunc("/sign-up", handlers.SignUpHandler)
+	http.HandleFunc("/log-in", handlers.LoginHandler)
+	http.HandleFunc("/dashboard", handlers.DashboardHandler)
+	http.HandleFunc("/log-out", handlers.LogoutHandler)
 
-    // This is a simple way to serve static files
-    http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
+	// Serve static files
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 
-    log.Println("Starting server on :8080")
-    log.Println("URL http://localhost:8080")
+	log.Println("Starting server on :8081")
+	log.Println("URL http://localhost:8081")
 
-    // Start the server
-    err := http.ListenAndServe(":8080", nil)
-
-    // If there was an error starting the server, log the error and exit
-    // This is a fatal error, so the program will exit
-    // This can hepend if the port is already in use or the user does not have permission to use it
-    if err != nil {
-        log.Fatalf("Could not start server: %s\n", err)
-    }
+	// Start the server
+	err := http.ListenAndServe(":8081", nil)
+	if err != nil {
+		log.Fatalf("Could not start server: %s\n", err)
+	}
 }
