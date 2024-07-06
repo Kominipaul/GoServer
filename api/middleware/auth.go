@@ -1,12 +1,10 @@
-// GoServer/api/middleware/auth.go
-
 package middleware
 
 import (
+	"fmt"
 	"net/http"
-	"time"
 	"sync"
-    "fmt"
+	"time"
 )
 
 // Session struct to hold session data
@@ -16,8 +14,8 @@ type Session struct {
 }
 
 var (
-	sessions      = map[string]Session{}
-	sessionsMutex = &sync.Mutex{}
+	Sessions      = map[string]Session{} // map to store sessions
+	SessionsMutex = &sync.Mutex{}        // mutex for concurrent access to sessions
 )
 
 // IsAuthenticated checks if user is authenticated
@@ -29,17 +27,17 @@ func IsAuthenticated(r *http.Request) bool {
 
 	sessionID := cookie.Value
 
-	sessionsMutex.Lock()
-	defer sessionsMutex.Unlock()
+	SessionsMutex.Lock()
+	defer SessionsMutex.Unlock()
 
-	session, exists := sessions[sessionID]
+	session, exists := Sessions[sessionID]
 	if !exists {
 		return false
 	}
 
 	// Check if the session has expired
 	if session.Expires.Before(time.Now()) {
-		delete(sessions, sessionID)
+		delete(Sessions, sessionID)
 		return false
 	}
 
@@ -51,9 +49,10 @@ func CreateSession(username string) string {
 	sessionID := generateSessionID()
 	expires := time.Now().Add(24 * time.Hour) // Session valid for 24 hours
 
-	sessionsMutex.Lock()
-	sessions[sessionID] = Session{Username: username, Expires: expires}
-	sessionsMutex.Unlock()
+	SessionsMutex.Lock()
+	defer SessionsMutex.Unlock()
+
+	Sessions[sessionID] = Session{Username: username, Expires: expires}
 
 	return sessionID
 }
@@ -65,7 +64,8 @@ func generateSessionID() string {
 
 // LogoutUser invalidates the session for the given session ID
 func LogoutUser(sessionID string) {
-	sessionsMutex.Lock()
-	delete(sessions, sessionID)
-	sessionsMutex.Unlock()
+	SessionsMutex.Lock()
+	defer SessionsMutex.Unlock()
+
+	delete(Sessions, sessionID)
 }

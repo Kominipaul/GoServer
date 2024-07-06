@@ -3,31 +3,32 @@
 package main
 
 import (
+	"GoServer/api/handlers"
+	"GoServer/internal/db"
 	"log"
 	"net/http"
 	"os"
-
-	"GoServer/api/handlers"
-	"GoServer/internal/db"
 )
 
 func main() {
+
 	// Initialize the database connection
 	db.Init()
 
 	http.HandleFunc("/", handlers.HomeHandler)
-	http.HandleFunc("/signup", handlers.SignUpHandler)
-	http.HandleFunc("/login", handlers.LoginHandler)
+	http.HandleFunc("/sign-up", handlers.SignUpHandler)
+	http.HandleFunc("/log-in", handlers.LoginHandler)
 	http.HandleFunc("/dashboard", handlers.DashboardHandler)
-	http.HandleFunc("/logout", handlers.LogoutHandler)
+	http.HandleFunc("/log-out", handlers.LogoutHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	log.Printf("Server starting on :%s", port)
+	log.Printf("Server starting on http://localhost:%s", port)
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatalf("could not listen on port %s %v", port, err)
 	}
+
 }

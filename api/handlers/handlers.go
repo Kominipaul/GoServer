@@ -1,17 +1,15 @@
-// GoServer/api/handlers/handlers.go
-
 package handlers
 
 import (
 	"GoServer/api/middleware"
+	"GoServer/internal/db"
 	"database/sql"
 	"html/template"
+	"log"
 	"net/http"
 	"path/filepath"
 	"regexp"
-    "GoServer/internal/db"
 
-	_ "github.com/go-sql-driver/mysql" // MySQL driver
 	"github.com/pkg/errors"
 )
 
@@ -58,12 +56,13 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		// Store user in the database
 		err := storeUser(user)
 		if err != nil {
+			log.Printf("Error saving user to database: %v", err)
 			http.Error(w, "Error saving user to database", http.StatusInternalServerError)
 			return
 		}
 
-		// Redirect to the home page
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		// Redirect to the login page after successful signup
+		http.Redirect(w, r, "/log-in", http.StatusSeeOther)
 	}
 }
 
@@ -118,15 +117,6 @@ func isValidEmail(email string) bool {
 	return emailRegex.MatchString(email)
 }
 
-// insertUser inserts a new user into the database
-func insertUser(user User) error {
-	_, err := db.DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", user.Username, user.Email, user.Password)
-	if err != nil {
-		return errors.Wrap(err, "failed to insert user into database")
-	}
-	return nil
-}
-
 // LoginHandler renders the login page and handles user authentication
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
@@ -138,8 +128,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Authenticate user
 		if isValidUser(username, password) {
-			// Generate a unique session ID (for demonstration, using username)
-			sessionID := username
+			// Create session
+			sessionID := middleware.CreateSession(username)
 
 			// Set a cookie with the session ID
 			http.SetCookie(w, &http.Cookie{
@@ -172,15 +162,27 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get username from session (for demonstration, using username as session ID)
-	sessionID, err := r.Cookie("session_id")
+	// Get username from session
+	cookie, err := r.Cookie("session_id")
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	// Query user details from database
-	user, err := getUserByUsername(sessionID.Value)
+	sessionID := cookie.Value
+
+	// Use SessionsMutex and Sessions from middleware package
+	middleware.SessionsMutex.Lock()
+	defer middleware.SessionsMutex.Unlock()
+
+	session, exists := middleware.Sessions[sessionID]
+	if !exists {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Query user details from database based on session.Username
+	user, err := getUserByUsername(session.Username)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -202,7 +204,10 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute template
-	tmpl.Execute(w, data)
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // getUserByUsername retrieves user details from the database by username
@@ -214,6 +219,25 @@ func getUserByUsername(username string) (User, error) {
 		return user, errors.Wrap(err, "failed to retrieve user from database")
 	}
 	return user, nil
+}
+
+// storeUser stores a new user in the database
+func storeUser(user User) error {
+	_, err := db.DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", user.Username, user.Email, user.Password)
+	if err != nil {
+		log.Printf("Error inserting user into database: %v", err)
+	}
+	return err
+}
+
+// isValidUser checks user credentials against the database
+func isValidUser(username, password string) bool {
+	var storedPassword string
+	err := db.DB.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedPassword)
+	if err == sql.ErrNoRows || storedPassword != password {
+		return false
+	}
+	return true
 }
 
 // LogoutHandler handles log out request
@@ -228,21 +252,4 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect to the home page or login page
 	http.Redirect(w, r, "/", http.StatusSeeOther)
-
-}
-
-// storeUser stores a new user in the database
-func storeUser(user User) error {
-	_, err := db.DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", user.Username, user.Email, user.Password)
-	return err
-}
-
-// isValidUser checks user credentials against the database
-func isValidUser(username, password string) bool {
-	var storedPassword string
-	err := db.DB.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedPassword)
-	if err == sql.ErrNoRows || storedPassword != password {
-		return false
-	}
-	return true
 }
