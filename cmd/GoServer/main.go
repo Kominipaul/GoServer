@@ -1,30 +1,33 @@
+// cmd/GoServer/main.go
+
 package main
 
 import (
 	"log"
 	"net/http"
+	"os"
 
-	"GoServer/api/handlers" // Absolute import path
-	// Absolute import path
+	"GoServer/api/handlers"
+	"GoServer/internal/db"
 )
 
 func main() {
-	// Register handlers and middleware
+	// Initialize the database connection
+	db.Init()
+
 	http.HandleFunc("/", handlers.HomeHandler)
-	http.HandleFunc("/sign-up", handlers.SignUpHandler)
-	http.HandleFunc("/log-in", handlers.LoginHandler)
+	http.HandleFunc("/signup", handlers.SignUpHandler)
+	http.HandleFunc("/login", handlers.LoginHandler)
 	http.HandleFunc("/dashboard", handlers.DashboardHandler)
-	http.HandleFunc("/log-out", handlers.LogoutHandler)
+	http.HandleFunc("/logout", handlers.LogoutHandler)
 
-	// Serve static files
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-	log.Println("Starting server on :8081")
-	log.Println("URL http://localhost:8081")
-
-	// Start the server
-	err := http.ListenAndServe(":8081", nil)
-	if err != nil {
-		log.Fatalf("Could not start server: %s\n", err)
+	log.Printf("Server starting on :%s", port)
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
+		log.Fatalf("could not listen on port %s %v", port, err)
 	}
 }

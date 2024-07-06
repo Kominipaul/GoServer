@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+    "GoServer/internal/db"
 
 	_ "github.com/go-sql-driver/mysql" // MySQL driver
 	"github.com/pkg/errors"
@@ -19,17 +20,6 @@ type User struct {
 	Username string
 	Email    string
 	Password string
-}
-
-var db *sql.DB
-
-func init() {
-	// Connect to the MySQL database
-	var err error
-	db, err = sql.Open("mysql", "root:@tcp(localhost:3306)/myapp")
-	if err != nil {
-		panic(errors.Wrap(err, "failed to connect to database"))
-	}
 }
 
 // HomeHandler renders the home page
@@ -65,15 +55,15 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Insert user into database
-		err := insertUser(user)
+		// Store user in the database
+		err := storeUser(user)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error saving user to database", http.StatusInternalServerError)
 			return
 		}
 
-		// Redirect to the home page or login page
-		http.Redirect(w, r, "/log-in", http.StatusSeeOther)
+		// Redirect to the home page
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
@@ -130,7 +120,7 @@ func isValidEmail(email string) bool {
 
 // insertUser inserts a new user into the database
 func insertUser(user User) error {
-	_, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", user.Username, user.Email, user.Password)
+	_, err := db.DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", user.Username, user.Email, user.Password)
 	if err != nil {
 		return errors.Wrap(err, "failed to insert user into database")
 	}
@@ -218,7 +208,7 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
 // getUserByUsername retrieves user details from the database by username
 func getUserByUsername(username string) (User, error) {
 	var user User
-	row := db.QueryRow("SELECT username, email FROM users WHERE username = ?", username)
+	row := db.DB.QueryRow("SELECT username, email FROM users WHERE username = ?", username)
 	err := row.Scan(&user.Username, &user.Email)
 	if err != nil {
 		return user, errors.Wrap(err, "failed to retrieve user from database")
@@ -238,14 +228,21 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect to the home page or login page
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+
 }
 
-// isValidUser checks if the provided username and password are valid
+// storeUser stores a new user in the database
+func storeUser(user User) error {
+	_, err := db.DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", user.Username, user.Email, user.Password)
+	return err
+}
+
+// isValidUser checks user credentials against the database
 func isValidUser(username, password string) bool {
 	var storedPassword string
-	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedPassword)
-	if err != nil {
+	err := db.DB.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedPassword)
+	if err == sql.ErrNoRows || storedPassword != password {
 		return false
 	}
-	return storedPassword == password
+	return true
 }
