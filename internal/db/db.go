@@ -19,7 +19,7 @@ var (
 func Init() {
 	var err error
 
-	dbHost := "host.docker.internal" // use localhost for native
+	dbHost := "localhost" //"host.docker.internal" // use localhost for native
 	dbPort := "3306"
 	dbUser := "root"
 	dbPassword := ""

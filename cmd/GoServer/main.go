@@ -20,10 +20,12 @@ func main() {
 	http.HandleFunc("/log-in", handlers.LoginHandler)
 	http.HandleFunc("/dashboard", handlers.DashboardHandler)
 	http.HandleFunc("/log-out", handlers.LogoutHandler)
+	//http.HandleFunc("/music-playlist", handlers.MusicHandler)
+	http.HandleFunc("/contact", handlers.ContactHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "8081"
 	}
 
 	log.Printf("Server starting on http://localhost:%s", port)
