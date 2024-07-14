@@ -1,5 +1,3 @@
-// cmd/GoServer/main.go
-
 package main
 
 import (
@@ -15,13 +13,20 @@ func main() {
 	// Initialize the database connection
 	db.Init()
 
+	// Serve static files
+	fs := http.FileServer(http.Dir("web/static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	// Define your handlers
 	http.HandleFunc("/", handlers.HomeHandler)
 	http.HandleFunc("/sign-up", handlers.SignUpHandler)
 	http.HandleFunc("/log-in", handlers.LoginHandler)
 	http.HandleFunc("/dashboard", handlers.DashboardHandler)
 	http.HandleFunc("/log-out", handlers.LogoutHandler)
-	//http.HandleFunc("/music-playlist", handlers.MusicHandler)
-	http.HandleFunc("/contact", handlers.ContactHandler)
+	// http.HandleFunc("/music-playlist", handlers.MusicHandler)
+
+	http.HandleFunc("/store", handlers.RenderStore)
+	http.HandleFunc("/add-to-cart", handlers.AddToCartHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {

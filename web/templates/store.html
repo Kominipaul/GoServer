@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>My Web App</title>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"
+        />
+        <script src="https://unpkg.com/htmx.org"></script>
+    </head>
+    <body>
+        <h1>Welcome to Store</h1>
+        <h2>Store</h2>
+        <div class="grid">
+            {{range .Products}}
+            <div class="card">
+                <img src="../static/images/item1.jpg" alt="Item {{.ID}}" />
+                <h3>{{.Name}}</h3>
+                <p>${{.Price}}</p>
+                <button
+                    hx-get="/add-to-cart?id={{.ID}}"
+                    hx-target="#totalPrice"
+                    hx-swap="innerHTML"
+                >
+                    Add to Cart
+                </button>
+            </div>
+            {{end}}
+        </div>
+
+        <h3>Total Price: $<span id="totalPrice">{{.TotalPrice}}</span></h3>
+    </body>
+</html>
