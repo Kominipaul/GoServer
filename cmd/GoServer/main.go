@@ -23,10 +23,12 @@ func main() {
 	http.HandleFunc("/log-in", handlers.LoginHandler)
 	http.HandleFunc("/dashboard", handlers.DashboardHandler)
 	http.HandleFunc("/log-out", handlers.LogoutHandler)
+	http.HandleFunc("/contact", handlers.ContactHandler)
 	// http.HandleFunc("/music-playlist", handlers.MusicHandler)
 
 	http.HandleFunc("/store", handlers.RenderStore)
 	http.HandleFunc("/add-to-cart", handlers.AddToCartHandler)
+	http.HandleFunc("/clear-cart", handlers.ClearCartHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {

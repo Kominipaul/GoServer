@@ -31,5 +31,13 @@
         </div>
 
         <h3>Total Price: $<span id="totalPrice">{{.TotalPrice}}</span></h3>
+        <!-- clear the cart -->
+        <button
+            hx-get="/clear-cart"
+            hx-target="#totalPrice"
+            hx-swap="innerHTML"
+        >
+            Clear Cart
+        </button>
     </body>
 </html>

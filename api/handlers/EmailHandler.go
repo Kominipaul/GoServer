@@ -20,6 +20,7 @@ func ContactHandler(w http.ResponseWriter, r *http.Request) {
 		message := r.FormValue("message")
 
 		// Send email to admin
+		println(name, email, message)
 		err := sendEmail(name, email, message)
 		if err != nil {
 			log.Printf("Error sending email: %v", err)

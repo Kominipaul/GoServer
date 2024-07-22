@@ -72,6 +72,29 @@ func RenderStore(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Clear cart
+func ClearCart() {
+	cart.Lock()
+	defer cart.Unlock()
+	cart.items = make(map[string]int)
+}
+
+func ClearCartHandler(w http.ResponseWriter, r *http.Request) {
+	// Check if user is authenticated
+	if !middleware.IsAuthenticated(r) {
+		http.Redirect(w, r, "/log-in", http.StatusSeeOther)
+		return
+	}
+
+	ClearCart()
+	// Recalculate total price and send it back to the client
+	// Respond with updated total price for htmx
+	totalPrice := calculateTotalPrice()
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(fmt.Sprintf("%.2f", totalPrice)))
+
+}
+
 // Add to cart handler
 func AddToCartHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if user is authenticated (replace with your auth logic)
