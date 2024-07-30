@@ -8,6 +8,7 @@
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"
         />
+        <script src="../static/js/htmx.min.js"></script>
         <script src="https://unpkg.com/htmx.org"></script>
     </head>
     <body>
@@ -19,7 +20,7 @@
                 <img src="../static/images/item1.jpg" alt="Item {{.ID}}" />
                 <h3>{{.Name}}</h3>
                 <p>${{.Price}}</p>
-                <button
+                <butto
                     hx-get="/add-to-cart?id={{.ID}}"
                     hx-target="#totalPrice"
                     hx-swap="innerHTML"
@@ -39,5 +40,7 @@
         >
             Clear Cart
         </button>
+        <button onclick="window.location.href = '/checkout'">Checkout</button>
+
     </body>
 </html>

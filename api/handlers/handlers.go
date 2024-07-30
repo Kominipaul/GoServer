@@ -22,4 +22,6 @@ func renderTemplate(w http.ResponseWriter, tmplPath string, data interface{}) {
 	if err := tmpl.Execute(w, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
 }
+

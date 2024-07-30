@@ -29,6 +29,10 @@ func main() {
 	http.HandleFunc("/store", handlers.RenderStore)
 	http.HandleFunc("/add-to-cart", handlers.AddToCartHandler)
 	http.HandleFunc("/clear-cart", handlers.ClearCartHandler)
+    http.HandleFunc("/checkout", handlers.CheckoutHandler)
+
+    http.HandleFunc("/add-products", handlers.AddProducts)
+    http.HandleFunc("/admin", handlers.AdminHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
